@@ -28,7 +28,8 @@ int lines_count;//number of lines rendered part of paragraph
 int current_window = 1;  // current window to display
 int  text_x = -400;
 int text_y = 150;
-bool wins[10];
+int no_of_levels = 3;
+char best_score[10][4];
 /*********************************input expected***************************************/
 int lvl_no = 1;//expecting lvl to be one based
 char uname[100]; int uname_len = 0;//hardcoded expecting inp from the login scren
@@ -39,7 +40,7 @@ GLfloat WHITE[] = { 0.0, 0.0, 0, 0 };
 /*********************************************************************/
 char welcoming[100];
 char level_data[] = "level *";
-char welcome_str[100], wrong_str[100], timer_str[100];//eventually contains "Welcome, Samir sabri"
+char welcome_str[100], wrong_str[100], timer_str[100],score_str[100];//eventually contains "Welcome, Samir sabri"
 /*
 discription: renders char* at certain coordinates
 returns: void
@@ -56,6 +57,15 @@ void drawBitmapText(char *str, float x, float y)
 discription: initializes my style
 returns: void
 */
+/*description: update all the scores of the players*/
+void update_scores()
+{
+	FILE * outp = fopen("scores.txt", "r+");
+	for (int i = 1; i <= no_of_levels; i++){
+		fprintf(outp, "%s\n", best_score[i]);
+	}
+	fclose(outp);
+}
 void myStyleInit()
 {
 	glClearColor(0.5, 0.5, 0.5, 1.0);//background color+ alpha object blending parameter
@@ -98,6 +108,13 @@ void render_titlebar(char *user_name)
 	timer_str[13] = time_left / 10 + '0';
 	timer_str[14] = time_left % 10 + '0';
 	drawBitmapText(timer_str, 0 + 11, 600 - 35);
+
+	glColor3f(0.0, 0.0, 0.0);//Text color Black
+	*score_str = NULL;
+	strcat(score_str, "best score: ");
+	strcat(score_str, best_score[lvl_no]);
+	drawBitmapText(score_str, -250, 600 - 35);
+
 	glutSwapBuffers();
 }
 /*
@@ -338,7 +355,7 @@ void myDisplay()
 	glPointSize(4.0);
 	if (current_window == PLAY_WINDOW){
 		glutSetCursor(GLUT_CURSOR_BOTTOM_LEFT_CORNER);
-		render_background();
+	//	render_background();
 		render_titlebar(uname);
 		render_paragraph();
 		render_keyboard();
@@ -364,19 +381,24 @@ void myDisplay()
 		drawBitmapText(uname, text_x + 400, text_y);
 	}
 	else if (current_window == SELECT_WINDOW){
+		printf("%s\n%s\n%s\n", best_score[1], best_score[2], best_score[3]);
 		int xval = -200, topy = 400;
 		strcpy(welcoming, "Welcome ");
 		strcat(welcoming, uname);
 		strcat(welcoming, " !");
 		drawBitmapText(welcoming, xval, topy);
 		topy -= 50;
-		for (int i = 1; i <= 3; i++){
+		for (int i = 1; i <= no_of_levels; i++){
 			topy -= 150;
 			glRasterPos2i(xval, topy);
 			if (lvl_no == i)
 				glColor3f(0, 1, 0);
 			else
-				glColor3f(0.752941176, 0.752941176, 0.752941176); // color of polygon
+				if (best_score[i][0] == '0'&&best_score[i][1] == '0')
+					glColor3f(0.752941176, 0.752941176, 0.752941176); // color of polygon
+				else
+					glColor3f(0, 0, 1);
+
 			glBegin(GL_POLYGON);
 			glVertex2i(xval, topy);
 			glVertex2i(xval, topy + 100);
@@ -390,6 +412,14 @@ void myDisplay()
 		}
 	}
 	else if (current_window == WIN_WINDOW){
+		int cur_score = time_left * 5 / 3.0;
+		int max_score = best_score[lvl_no][1] - '0' + (best_score[lvl_no][0] - '0') * 10;
+//		printf("%d %d %d\n", cur_score, time_left,max_score);
+
+		if (cur_score > max_score){
+			best_score[lvl_no][1] = (cur_score % 10) + '0', best_score[lvl_no][0] = cur_score / 10 + '0';
+			update_scores();
+		}
 		int c = 0;
 		int xval = -250, topy = 400; // decrease topy
 		char message[100];
@@ -399,7 +429,8 @@ void myDisplay()
 		drawBitmapText(message, xval, topy);
 		strcpy(message, "You've passed level * with score ");
 		for (; message[c] != '*'; c++);
-		message[c] = lvl_no + '0' + 1;
+		message[c] = lvl_no + '0';
+		strcat(message, best_score[lvl_no]);
 		drawBitmapText(message, xval - 100, topy - 100);
 	}
 	else if (current_window == LOOSE_WINDOW){
@@ -491,6 +522,17 @@ static void keyBoard(unsigned char ch, int x, int y)
 	}
 	myDisplay();
 }
+/*description: read scores of the players for each level*/
+void read_scores()
+{
+	FILE * inpt = fopen ("scores.txt", "r");
+	for (int i = 1; i <= no_of_levels; i++){
+		fscanf(inpt, "%s", best_score[i]);
+		printf("%s\n", best_score[i]);
+	}
+	fclose(inpt);
+}
+/*******************************************/
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
@@ -500,6 +542,7 @@ int main(int argc, char **argv)
 	glutCreateWindow("Welcome to our funky game!");
 	myStyleInit();
 	time_left = 60;
+	read_scores();
 	glutDisplayFunc(myDisplay);
 	glutTimerFunc(1000, myTimer, 0);
 	glutKeyboardFunc(keyBoard);
