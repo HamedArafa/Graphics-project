@@ -19,7 +19,7 @@
 #define LOOSE_WINDOW 5
 using namespace std;
 char orig_str[10][600], tempo[100][100], cur_ch;
-Image *img1;
+Image *img1 , *img2 ;
 bool stop;
 int p1, p2;// indecies of the current letter
 int time_left;//time left
@@ -131,6 +131,23 @@ void render_paragraph()
 		//glFlush () ;
 	}
 }
+
+
+void render_background()
+{
+	string background;
+	background = "wood.bmp";
+	free(img2);
+	img2 = new Image(background.c_str());
+	glPushMatrix(); printf("X\n");
+
+	glScalef(2, 2, 1);
+	//glTranslatef(0, 0, 0);
+	img2->display(-300, -300); 
+	//img2->display(0, 0);
+	glPopMatrix();
+}
+
 void render_keyboard()
 {
 	string temp_img;
@@ -321,6 +338,7 @@ void myDisplay()
 	glPointSize(4.0);
 	if (current_window == PLAY_WINDOW){
 		glutSetCursor(GLUT_CURSOR_BOTTOM_LEFT_CORNER);
+		render_background();
 		render_titlebar(uname);
 		render_paragraph();
 		render_keyboard();
