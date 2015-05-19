@@ -355,7 +355,8 @@ void myDisplay()
 	glPointSize(4.0);
 	if (current_window == PLAY_WINDOW){
 		glutSetCursor(GLUT_CURSOR_BOTTOM_LEFT_CORNER);
-	//	render_background();
+		//bgm(); 
+		//render_background();
 		render_titlebar(uname);
 		render_paragraph();
 		render_keyboard();
@@ -501,6 +502,7 @@ static void keyBoard(unsigned char ch, int x, int y)
 		if (ch == ENTER_VAL)
 			current_window = PLAY_WINDOW;
 		stop = 0;
+		bgm(); 
 		time_left = 59;
 		wrong_inp = 0;
 		p1 = 0; p2 = 0;
@@ -546,7 +548,7 @@ int main(int argc, char **argv)
 	glutDisplayFunc(myDisplay);
 	glutTimerFunc(1000, myTimer, 0);
 	glutKeyboardFunc(keyBoard);
-	bgm();
+	//bgm();
 	glutMainLoop();
 	return 0;
 }
